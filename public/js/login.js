@@ -13,14 +13,33 @@ function loginUser(e){
         email: emailInput.value,
         password: passwordInput.value
     };
+
     axios.post(`${ORIGIN}/user/login`, user)
     .then((res) => {
-        console.log(res);
+        localStorage.setItem('token', res.data.token);
+        showSuccessInDOM(res.data.msg);
         //window.location.href = '/';
     })
     .catch((err) => {
         const msg = err.response.data.msg ? err.response.data.msg : 'Could not login user';
         showErrorInDOM(msg);
+
+        if(err.response.status === 404){
+            const oldBorderColor = emailInput.style.borderColor;
+            emailInput.style.borderColor = 'red';
+            setTimeout(() => {
+                emailInput.style.borderColor = oldBorderColor;
+            }, 5000);
+            return;
+        }
+        if(err.response.status === 401){
+            const oldBorderColor = passwordInput.style.borderColor;
+            passwordInput.style.borderColor = 'red';
+            setTimeout(() => {
+                passwordInput.style.borderColor = oldBorderColor;
+            }, 5000);
+            return;
+        }
     });
 }
 
