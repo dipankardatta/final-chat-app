@@ -18,6 +18,10 @@ exports.postSignup = async (req, res) => {
         res.status(400).json({ msg: 'All fields are required' });
         return;
     }
+    if(phoneNumber.length != 10){
+        res.status(400).json({ msg: 'Invalid Phone Number' });
+        return;
+    }
 
     try{
         const hash = await bcrypt.hash(password, 10); // 10 salt rounds
