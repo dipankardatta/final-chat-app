@@ -41,3 +41,12 @@ exports.postSignup = async (req, res) => {
         res.status(500).json({ error: err, msg: 'Could not add user' });
     }
 }
+
+exports.getLogin = (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'views', 'login.html'));
+}
+
+exports.postLogin = (req, res) => {
+    console.log(req.body);
+    res.status(200).json({ msg: 'Login successful'});
+}
