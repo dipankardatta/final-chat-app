@@ -12,7 +12,11 @@ const successMsg = document.getElementById('success-msg');
 function addUser(e){
     e.preventDefault();
     if(password1Input.value !== password2Input.value){
-        showErrorInDOM('Passwords must match');
+        showErrorInDOM('Passwords must match!');
+        return;
+    }
+    if(phNumberInput.value.length != 10){
+        showErrorInDOM('Enter a valid phone number!');
         return;
     }
     const user = {
@@ -23,7 +27,7 @@ function addUser(e){
     };
     axios.post(`${HOST}/user/signup`, user)
     .then((res) => {
-        const msg = res.data.msg;
+        const msg = res.data.msg ? res.data.msg : 'Could not add user!';
         showSuccessInDOM(msg);
         usernameInput.value = '';
         emailInput.value = '';
@@ -32,7 +36,7 @@ function addUser(e){
         password2Input.value = '';
     })
     .catch((err) => {
-        const msg = err.response.data.msg ? err.response.data.msg : 'Could not add user';
+        const msg = err.response.data.msg ? err.response.data.msg : 'Could not add user!';
         showErrorInDOM(msg);
     });
 }
