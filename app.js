@@ -6,6 +6,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const sequelize = require('./util/database');
+const User = require('./models/user');
+const Chat = require('./models/chat');
 const userRoutes = require('./routes/user');
 const homepageRoutes = require('./routes/homepage');
 const chatRoutes = require('./routes/chat');
@@ -21,6 +23,9 @@ app.use(homepageRoutes);
 app.use('/user', userRoutes);
 app.use(chatRoutes);
 app.use(errorController.get404);
+
+User.hasMany(Chat);
+Chat.belongsTo(User);
 
 sequelize.sync()
 .then((result) => app.listen(process.env.PORT || 3000))
