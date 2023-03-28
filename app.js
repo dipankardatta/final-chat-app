@@ -8,6 +8,7 @@ const cors = require('cors');
 const sequelize = require('./util/database');
 const userRoutes = require('./routes/user');
 const homepageRoutes = require('./routes/homepage');
+const chatRoutes = require('./routes/chat');
 const errorController = require('./controllers/error');
 
 const app = express();
@@ -18,6 +19,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(homepageRoutes);
 app.use('/user', userRoutes);
+app.use(chatRoutes);
 app.use(errorController.get404);
 
 sequelize.sync()

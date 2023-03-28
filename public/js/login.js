@@ -18,7 +18,7 @@ function loginUser(e){
     .then((res) => {
         localStorage.setItem('token', res.data.token);
         showSuccessInDOM(res.data.msg);
-        //window.location.href = '/';
+        window.location.href = '/chat';
     })
     .catch((err) => {
         const msg = err.response.data.msg ? err.response.data.msg : 'Could not login user';
