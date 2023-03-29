@@ -16,18 +16,22 @@ function showUserInfoInDOM(){
 }
 
 function addMessage(){
+    if(messageInput.value === ''){
+        showErrorInDOM('Please enter message!');
+        return;
+    }
+
     const chat = {
-        userId,
         message: messageInput.value
     };
-    axios.post(`${ORIGIN}/chat`, chat)
+
+    axios.post(`${ORIGIN}/chat`, chat, { headers: {Authorization: token} })
     .then((res) => {
         const message = res.data.message;
         const li = document.createElement('li');
         li.innerText = `${username}: ${message}`;
         li.id = userId;
-        li.className = 'list-group-item bg-light';
-        li.classList.add('text-success');
+        li.className = 'list-group-item bg-light text-success text-end';
         chatList.appendChild(li);
         messageInput.value = '';
     })
@@ -47,7 +51,7 @@ function showMessages(){
             li.id = chat.userId;
             li.className = 'list-group-item bg-light';
             if(username === chat.user.username){
-                li.classList.add('text-success');
+                li.classList.add('text-success', 'text-end');
             }
             chatList.appendChild(li);
         });

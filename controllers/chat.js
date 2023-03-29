@@ -9,10 +9,10 @@ exports.getChat = (req, res) => {
 
 exports.postChat = async (req, res) => {
     try{
-        const userId = req.body.userId;
+        const userId = req.user.id;
         const message = req.body.message;
 
-        if(!userId || !message){
+        if(!message){
             res.status(400).json({ msg: 'All fields are required '});
             return;
         }
@@ -32,6 +32,7 @@ exports.postChat = async (req, res) => {
 exports.getAllChats = async (req, res) => {
     try{
         const chats = await Chat.findAll({
+            attributes: ['message'],
             include: [{
                 model: User,
                 attributes: ['username']
