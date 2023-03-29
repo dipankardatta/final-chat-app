@@ -23,7 +23,7 @@ exports.postChat = async (req, res) => {
         });
 
         res.status(200).json(chat);
-    }catch(err){
+    }catch(err){console.log(err);
         console.log('POST CHAT ERROR');
         res.status(500).json({ error: err, msg: 'Could not add chat '});
     }
