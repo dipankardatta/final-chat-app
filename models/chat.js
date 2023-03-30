@@ -12,6 +12,10 @@ const Chat = sequelize.define('chats', {
     message: {
         type: Sequelize.TEXT,
         allowNull: false
+    },
+    timeStamp: {
+        type: Sequelize.DATE,
+        allowNull: false
     }
 });
 

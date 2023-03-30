@@ -17,18 +17,27 @@ function showUserInfoInDOM(){
     usernameNav.innerText = username.charAt(0).toUpperCase() + username.slice(1);
 }
 
-function showMyChatInDOM(message){
+function showMyChatInDOM(message, timeStamp){
     const div = document.createElement('div');
-    const div2 = document.createElement('div');
-    div2.innerText = `${username}: ${message}`;
     div.className = 'd-flex flex-row-reverse my-1';
+
+    const div2 = document.createElement('div');
+    div2.innerText = `${message}`;
     div2.className = 'rounded bg-success text-light px-2 py-1';
+
+    const sub = document.createElement('sub');
+    const HHMMSS = (new Date(timeStamp)).toTimeString().split(' ')[0].split(':');
+    sub.innerText = `${HHMMSS[0]}:${HHMMSS[1]}`;
+    sub.className = 'ms-1';
+    
+    div2.appendChild(sub);
     div.appendChild(div2);
     chatList.appendChild(div);
+
     messageInput.value = '';
 }
 
-function addMessage(){
+function addChat(){
     if(messageInput.value === ''){
         showErrorInDOM('Please enter message!');
         return;
@@ -42,17 +51,27 @@ function addMessage(){
     .then((res) => {
         const message = res.data.message;
         const messageId = res.data.id;
+        const timeStamp = res.data.timeStamp;
+
         const chat = {
             id: messageId,
             message,
-            user: { username }
+            user: { username },
+            timeStamp
         };
+
         const oldChats = localStorage.getItem('oldChats') ? JSON.parse(localStorage.getItem('oldChats')) : [];
         oldChats.push(chat);
-        const chats = oldChats.slice(oldChats.length - STORED_CHATS_LENGTH); // get the latest 10 chats
-        localStorage.setItem('oldChats', JSON.stringify(chats));
 
-        showMyChatInDOM(message);
+        //get the latest 10 chats
+        if(oldChats.length > STORED_CHATS_LENGTH){
+            const chats = oldChats.slice(oldChats.length - STORED_CHATS_LENGTH);
+            localStorage.setItem('oldChats', JSON.stringify(chats));
+        }else{
+            localStorage.setItem('oldChats', JSON.stringify(oldChats));
+        }
+
+        showMyChatInDOM(message, timeStamp);
     })
     .catch((err) => {
         const msg = err.response.data.msg ? err.response.data.msg : 'Could not add chat :(';
@@ -63,19 +82,28 @@ function addMessage(){
 function showChatInDOM(chat){
     const div = document.createElement('div');
     const div2 = document.createElement('div');
-    div2.innerText = `${chat.user.username}: ${chat.message}`;
+
+    const sub = document.createElement('sub');
+    const HHMMSS = (new Date(chat.timeStamp)).toTimeString().split(' ')[0].split(':');
+    sub.innerText = `${HHMMSS[0]}:${HHMMSS[1]}`;
+    sub.className = 'ms-1';
+
     if(username === chat.user.username){
+        div2.innerText = `${chat.message}`;
         div.className = 'd-flex flex-row-reverse my-1';
         div2.className = 'rounded bg-success text-light px-2 py-1';
     }else{
+        div2.innerText = `${chat.user.username}: ${chat.message}`;
         div.className = 'd-flex flex-row my-1';
         div2.className = 'rounded bg-secondary text-light px-2 py-1';
     }
+
+    div2.appendChild(sub);
     div.appendChild(div2);
     chatList.appendChild(div);
 }
 
-function showMessages(){
+function showChats(){
     const oldChats = localStorage.getItem('oldChats') ? JSON.parse(localStorage.getItem('oldChats')) : [];
     const lastmessageid = oldChats.length > 0 ? oldChats[oldChats.length-1].id : -1;
 
@@ -83,15 +111,24 @@ function showMessages(){
     .then((res) => {
         const newChats = res.data;
         const totalChats = [...oldChats, ...newChats];
-        const chats = totalChats.slice(totalChats.length - STORED_CHATS_LENGTH); // get the latest 10 chats
-        localStorage.setItem('oldChats', JSON.stringify(chats));
 
         chatList.innerText = '';
-        chats.forEach((chat) => {
-            showChatInDOM(chat);
-        });
+
+        //get the latest 10 chats
+        if(totalChats.length > STORED_CHATS_LENGTH){
+            const chats = totalChats.slice(totalChats.length - STORED_CHATS_LENGTH);
+            localStorage.setItem('oldChats', JSON.stringify(chats));
+            chats.forEach((chat) => {
+                showChatInDOM(chat);
+            });
+        }else{
+            localStorage.setItem('oldChats', JSON.stringify(totalChats));
+            totalChats.forEach((chat) => {
+                showChatInDOM(chat);
+            });
+        }
     })
-    .catch((err) => {
+    .catch((err) => {console.log(err);
         const msg = err.response.data.msg ? err.response.data.msg : 'Could not fetch chats :(';
         showErrorInDOM(msg);
     });
@@ -126,8 +163,8 @@ function showErrorInDOM(msg){
 
 window.addEventListener('DOMContentLoaded', () => {
     showUserInfoInDOM();
-    showMessages();
-    setInterval(showMessages, 5000); //get the chats from backend every 5 sec.
-    sendBtn.addEventListener('click', addMessage);
+    showChats();
+    //setInterval(showMessages, 5000); //get the chats from backend every 5 sec.
+    sendBtn.addEventListener('click', addChat);
     logoutBtn.addEventListener('click', logout);
 });
