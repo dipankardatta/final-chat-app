@@ -1,4 +1,5 @@
 const ORIGIN = window.location.origin;
+const STORED_CHATS_LENGTH = 10;
 
 const token = localStorage.getItem('token');
 const decodedToken = parseJwt(token);
@@ -13,7 +14,18 @@ const errorMsg = document.getElementById('err-msg');
 const logoutBtn = document.getElementById('logout-btn');
 
 function showUserInfoInDOM(){
-    usernameNav.innerText = username;
+    usernameNav.innerText = username.charAt(0).toUpperCase() + username.slice(1);
+}
+
+function showMyChatInDOM(message){
+    const div = document.createElement('div');
+    const div2 = document.createElement('div');
+    div2.innerText = `${username}: ${message}`;
+    div.className = 'd-flex flex-row-reverse my-1';
+    div2.className = 'rounded bg-success text-light px-2 py-1';
+    div.appendChild(div2);
+    chatList.appendChild(div);
+    messageInput.value = '';
 }
 
 function addMessage(){
@@ -29,14 +41,18 @@ function addMessage(){
     axios.post(`${ORIGIN}/chat`, chat, { headers: {Authorization: token} })
     .then((res) => {
         const message = res.data.message;
-        const div = document.createElement('div');
-        const div2 = document.createElement('div');
-        div2.innerText = `${username}: ${message}`;
-        div.className = 'd-flex flex-row-reverse my-1';
-        div2.className = 'rounded bg-success text-light px-2 py-1';
-        div.appendChild(div2);
-        chatList.appendChild(div);
-        messageInput.value = '';
+        const messageId = res.data.id;
+        const chat = {
+            id: messageId,
+            message,
+            user: { username }
+        };
+        const oldChats = localStorage.getItem('oldChats') ? JSON.parse(localStorage.getItem('oldChats')) : [];
+        oldChats.push(chat);
+        const chats = oldChats.slice(oldChats.length - STORED_CHATS_LENGTH); // get the latest 10 chats
+        localStorage.setItem('oldChats', JSON.stringify(chats));
+
+        showMyChatInDOM(message);
     })
     .catch((err) => {
         const msg = err.response.data.msg ? err.response.data.msg : 'Could not add chat :(';
@@ -44,24 +60,35 @@ function addMessage(){
     });
 }
 
+function showChatInDOM(chat){
+    const div = document.createElement('div');
+    const div2 = document.createElement('div');
+    div2.innerText = `${chat.user.username}: ${chat.message}`;
+    if(username === chat.user.username){
+        div.className = 'd-flex flex-row-reverse my-1';
+        div2.className = 'rounded bg-success text-light px-2 py-1';
+    }else{
+        div.className = 'd-flex flex-row my-1';
+        div2.className = 'rounded bg-secondary text-light px-2 py-1';
+    }
+    div.appendChild(div2);
+    chatList.appendChild(div);
+}
+
 function showMessages(){
-    axios.get(`${ORIGIN}/all-chats`)
+    const oldChats = localStorage.getItem('oldChats') ? JSON.parse(localStorage.getItem('oldChats')) : [];
+    const lastmessageid = oldChats.length > 0 ? oldChats[oldChats.length-1].id : -1;
+
+    axios.get(`${ORIGIN}/all-chats?lastmessageid=${lastmessageid}`)
     .then((res) => {
-        const chats = res.data;
+        const newChats = res.data;
+        const totalChats = [...oldChats, ...newChats];
+        const chats = totalChats.slice(totalChats.length - STORED_CHATS_LENGTH); // get the latest 10 chats
+        localStorage.setItem('oldChats', JSON.stringify(chats));
+
         chatList.innerText = '';
         chats.forEach((chat) => {
-            const div = document.createElement('div');
-            const div2 = document.createElement('div');
-            div2.innerText = `${chat.user.username}: ${chat.message}`;
-            if(username === chat.user.username){
-                div.className = 'd-flex flex-row-reverse my-1';
-                div2.className = 'rounded bg-success text-light px-2 py-1';
-            }else{
-                div.className = 'd-flex flex-row my-1';
-                div2.className = 'rounded bg-secondary text-light px-2 py-1';
-            }
-            div.appendChild(div2);
-            chatList.appendChild(div);
+            showChatInDOM(chat);
         });
     })
     .catch((err) => {
@@ -72,7 +99,7 @@ function showMessages(){
 
 function logout(){
     if(confirm('Are you sure you want to logout ?')){
-        localStorage.removeItem('token');
+        localStorage.clear();
         window.location.href = '/';
     }
 }
@@ -100,7 +127,7 @@ function showErrorInDOM(msg){
 window.addEventListener('DOMContentLoaded', () => {
     showUserInfoInDOM();
     showMessages();
-    setInterval(showMessages, 3000); //get the chats from backend every 3 sec.
+    setInterval(showMessages, 5000); //get the chats from backend every 5 sec.
     sendBtn.addEventListener('click', addMessage);
     logoutBtn.addEventListener('click', logout);
 });

@@ -1,5 +1,7 @@
 const path = require('path');
 
+const {Op} = require('sequelize');
+
 const Chat = require('../models/chat');
 const User = require('../models/user');
 
@@ -23,7 +25,7 @@ exports.postChat = async (req, res) => {
         });
 
         res.status(200).json(chat);
-    }catch(err){console.log(err);
+    }catch(err){
         console.log('POST CHAT ERROR');
         res.status(500).json({ error: err, msg: 'Could not add chat '});
     }
@@ -31,8 +33,10 @@ exports.postChat = async (req, res) => {
 
 exports.getAllChats = async (req, res) => {
     try{
+        const lastmessageid = req.query.lastmessageid;
         const chats = await Chat.findAll({
-            attributes: ['message'],
+            where: { id: { [Op.gt]: lastmessageid } }, // id > lastmessageid
+            attributes: ['id', 'message'],
             include: [{
                 model: User,
                 attributes: ['username']
