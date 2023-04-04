@@ -14,4 +14,6 @@ router.get('/pendingGroupRequests', authentication.authenticateUser, requestCont
 
 router.post('/confirmGroupRequest', authentication.authenticateUser, requestController.postConfirmRequest);
 
+router.get('/requestHistory', authentication.authenticateUser, requestController.getRequestHistory);
+
 module.exports = router;

@@ -16,7 +16,7 @@ exports.getGroupChats = async (req, res) => {
                     { groupId: groupId }
                 ]
             },
-            attributes: ['id', 'message', 'timeStamp'],
+            attributes: ['id', 'message', 'createdAt'],
             include: [{
                 model: User,
                 attributes: ['username']
@@ -43,7 +43,6 @@ exports.postaddChat = async (req, res) => {
 
         const chat = await Chat.create({
             message,
-            timeStamp: new Date(),
             userId,
             groupId,
         });
