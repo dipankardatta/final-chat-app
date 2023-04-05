@@ -72,9 +72,12 @@ function getGroupMembers(){
         members.forEach((member) => addGroupMemberInDOM(member));
     })
     .catch((err) => {
-        const msg = err.response.data.msg ? err.response.data.msg : "Could not fetch group members :(";
+        let msg = "Could not fetch group members :(";
+        if(err.response && err.response.data && err.response.data.msg){
+            msg = err.response.data.msg;
+        }
         showErrorInDOM(msg);
-    })
+    });
 }
 
 //groups
@@ -108,9 +111,12 @@ function getGroups(){
         groups.forEach((group) => addGroupInDOM(group));
     })
     .catch((err) => {
-        const msg = err.response.data.msg ? err.response.data.msg : "Could not fetch user's groups :(";
+        let msg = "Could not fetch user's groups :(";
+        if(err.response && err.response.data && err.response.data.msg){
+            msg = err.response.data.msg;
+        }
         showErrorInDOM(msg);
-    })
+    });
 }
 
 function createGroup(e){
@@ -135,7 +141,10 @@ function createGroup(e){
         createGroupContainer.style.display = 'none';
     })
     .catch((err) => {
-        const msg = err.response.data.msg ? err.response.data.msg : 'Could not create group :(';
+        let msg = "Could not create group :(";
+        if(err.response && err.response.data && err.response.data.msg){
+            msg = err.response.data.msg;
+        }
         showErrorInDOM(msg);
     });
 }
@@ -169,14 +178,37 @@ function addChatInDOM(chat){
 }
 
 function getGroupChats(groupId){
-    axios.get(`${ORIGIN}/group/chats?groupId=${groupId}&lastmsgid=${-1}`, { headers: {Authorization: token} })
+    const storedChatsArr = localStorage.getItem('storedChatsArr') ? JSON.parse(localStorage.getItem('storedChatsArr')) : [];
+    const oldGroupChatsObjArr = storedChatsArr.filter((oldGroupChatObj) => oldGroupChatObj.groupId === groupId);
+    const oldGroupChatsObj =  oldGroupChatsObjArr.length > 0 ? oldGroupChatsObjArr[0] : { groupId , chats: [] };
+    if(oldGroupChatsObjArr.length === 0){
+        storedChatsArr.push(oldGroupChatsObj);
+    }
+    const oldGroupChats = oldGroupChatsObj.chats;
+    const lastMessageId = oldGroupChats.length > 0 ? oldGroupChats[oldGroupChats.length-1].id : -1;
+
+    axios.get(`${ORIGIN}/group/chats?groupId=${groupId}&lastmsgid=${lastMessageId}`, { headers: {Authorization: token} })
     .then((res) => {
-        const chats = res.data;
+        const newGroupChats = res.data;
+
+        const totalGroupChats = [...oldGroupChats, ...newGroupChats];
+        const latestGroupChats = totalGroupChats.length > STORED_CHATS_LENGTH ? 
+            totalGroupChats.slice(totalGroupChats.length - STORED_CHATS_LENGTH) : totalGroupChats;
+        storedChatsArr.forEach((oldGroupChatObj) => {
+            if(oldGroupChatObj.groupId === groupId){
+                oldGroupChatObj.chats = latestGroupChats;
+            }
+        });
+        localStorage.setItem('storedChatsArr', JSON.stringify(storedChatsArr));
+
         chatList.innerText = '';
-        chats.forEach((chat) => addChatInDOM(chat));
+        latestGroupChats.forEach((chat) => addChatInDOM(chat));
     })
     .catch((err) => {
-        const msg = err.response.data.msg ? err.response.data.msg : "Could not fetch group chats :(";
+        let msg = "Could not fetch group chats :(";
+        if(err.response && err.response.data && err.response.data.msg){
+            msg = err.response.data.msg;
+        }
         showErrorInDOM(msg);
     });
 }
@@ -212,8 +244,11 @@ function createChatInGroup(){
 
         messageInput.value = '';
     })
-    .catch((err) => {console.log(err)
-        const msg = err.response.data.msg ? err.response.data.msg : 'Could not add chat :(';
+    .catch((err) => {
+        let msg = "Could not add chat :(";
+        if(err.response && err.response.data && err.response.data.msg){
+            msg = err.response.data.msg;
+        }
         showErrorInDOM(msg);
     });
 }
@@ -245,7 +280,10 @@ function sendRequest(e){
         sendRequestContainer.style.display = 'none';
     })
     .catch((err) => {
-        const msg = err.response.data.msg ? err.response.data.msg : 'Could not send group request :(';
+        let msg = "Could not send group request :(";
+        if(err.response && err.response.data && err.response.data.msg){
+            msg = err.response.data.msg;
+        }
         showErrorInDOM(msg);
     });
 }
@@ -266,9 +304,12 @@ function confirmRequest(groupId, status, RequestDiv){
         receivedRequestsContainer.removeChild(RequestDiv);
     })
     .catch((err) => {
-        const msg = err.response.data.msg ? err.response.data.msg : "Could not confirm request :(";
+        let msg = "Could not confirm request :(";
+        if(err.response && err.response.data && err.response.data.msg){
+            msg = err.response.data.msg;
+        }
         showErrorInDOM(msg);
-    })
+    });
 }
 
 function addRequestInDOM(request){
@@ -307,9 +348,12 @@ function getPendingRequests(){
         requests.forEach((request) => addRequestInDOM(request));
     })
     .catch((err) => {
-        const msg = err.response.data.msg ? err.response.data.msg : "Could not fetch group requests :(";
+        let msg = "Could not fetch group requests :(";
+        if(err.response && err.response.data && err.response.data.msg){
+            msg = err.response.data.msg;
+        }
         showErrorInDOM(msg);
-    })
+    });
 }
 
 function addReceivedRequestHistoryInDOM(request){
@@ -376,8 +420,11 @@ function getRequestHistory(){
             sentRequests.forEach((sentRequest) => addSentRequestHistoryInDOM(sentRequest));
         }
     })
-    .catch((err) => {console.log(err);
-        const msg = err.response.data.msg ? err.response.data.msg : "Could not fetch request history :(";
+    .catch((err) => {
+        let msg = "Could not fetch request history :(";
+        if(err.response && err.response.data && err.response.data.msg){
+            msg = err.response.data.msg;
+        }
         showErrorInDOM(msg);
     });
 }

@@ -51,38 +51,25 @@
   <!-- Control Buttons -->
   <!-- Show Group Members/Create Group/Send Request/Show Received Requests/Request History -->
   <div class="container bg-light my-1">
-    <button class="btn btn-sm btn-success" id="showGroupMembersBtn">Show Group Members</button>
-    <button class="btn btn-sm btn-success" id="createGroupBtn">Create Group +</button>
-    <button class="btn btn-sm btn-success" id="sendRequestBtn">Send Request >></button>
-    <button class="btn btn-sm btn-success" id="receivedRequestsBtn">Show received requests</button>
-    <button class="btn btn-sm btn-success" id="showRequestHistoryBtn">Request History</button>
+    <button class="btn btn-sm btn-success m-1" id="showGroupMembersBtn">Show Group Members</button>
+    <button class="btn btn-sm btn-success m-1" id="createGroupBtn">Create Group +</button>
+    <button class="btn btn-sm btn-success m-1" id="sendRequestBtn">Send Request >></button>
+    <button class="btn btn-sm btn-success m-1" id="receivedRequestsBtn">Show received requests</button>
+    <button class="btn btn-sm btn-success m-1" id="showRequestHistoryBtn">Request History</button>
   </div>
 
   <!-- Received Requests -->
   <div class="container bg-light" id="receivedRequestsOuterContainer" style="display: none;">
     <button id="closeReceivedRequestsBtn" class="btn btn-sm btn-outline-danger float-end">X</button>
-    <div class="row">
-      <div class="col-3"><hr></div>
-      <div class="text-center col-6">
-          <h4 class="text-success">Received Requests</h4>
-      </div>
-      <div class="col"><hr></div>
-    </div>
-    <div class="container bg-light" id="receivedRequestsContainer">
-    </div>
+    <h4 class="text-center text-success">Received Requests</h4>
+    <div class="container bg-light" id="receivedRequestsContainer"></div>
   </div>
 
   <!-- Send Request Form -->
   <div class="container col-lg-6 col-md-7 col-sm-8 col-11 bg-light my-2 py-2" id="sendRequestContainer"
   style="display: none;">
       <button id="closeSendRequestFormBtn" class="btn btn-sm btn-outline-danger float-end">X</button>
-      <div class="row">
-          <div class="col-3"><hr></div>
-          <div class="text-center col-6">
-              <h4 class="text-success">Send Request</h4>
-          </div>
-          <div class="col"><hr></div>
-      </div>
+      <h4 class="text-center text-success">Send Request</h4>
       <form id="groupForm">
           <label for="requestEmail" class="form-label">Receiver Email</label>
           <input type="email" name="requestEmail" id="requestEmail" class="form-control mb-1" placeholder="abc@xyz.com" required>
@@ -96,13 +83,7 @@
   <div class="container col-lg-6 col-md-7 col-sm-8 col-11 bg-light my-2 py-2" id="createGroupContainer"
   style="display: none;">
       <button id="closeCreateGroupFormBtn" class="btn btn-sm btn-outline-danger float-end">X</button>
-      <div class="row">
-          <div class="col-3"><hr></div>
-          <div class="text-center col-6">
-              <h4 class="text-success">Create Group</h4>
-          </div>
-          <div class="col"><hr></div>
-      </div>
+      <h4 class="text-center text-success">Create Group</h4>
       <form id="createGroupForm">
           <label for="groupName" class="form-label">Group Name</label>
           <input type="text" name="groupName" id="groupName" class="form-control mb-1" placeholder="Enter group name" required>
