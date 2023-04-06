@@ -14,4 +14,6 @@ router.post('/addChat', authentication.authenticateUserGroup, groupController.po
 
 router.post('/generateRequest', authentication.authenticateUserGroup, requestController.postGenerateRequest);
 
+router.delete('/leaveGroup', authentication.authenticateUserGroup, groupController.deleteLeaveGroup);
+
 module.exports = router;

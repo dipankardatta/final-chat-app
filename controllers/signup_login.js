@@ -8,7 +8,8 @@ const User = require('../models/user');
 function generateAccessToken(user){
     return jwt.sign({ 
         userId: user.id, 
-        username: user.username 
+        username: user.username,
+        email: user.email
     }, process.env.JWT_SECRET_KEY);
 }
 
