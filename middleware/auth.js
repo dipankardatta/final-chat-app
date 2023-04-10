@@ -5,8 +5,6 @@ const User = require('../models/user');
 const Group = require('../models/group');
 const Admin = require('../models/admin');
 
-
-
 exports.authenticateUser = async (req, res, next) => {
     try{
         const token = req.headers.authorization;

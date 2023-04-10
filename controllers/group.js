@@ -1,9 +1,12 @@
+const path = require('path');
+
 const {Op} = require('sequelize');
 
 const User = require('../models/user'); 
 const Group = require('../models/group');
 const Chat = require('../models/chat');
 const Admin = require('../models/admin');
+const S3Services = require('../services/AwsS3');
 
 exports.getGroupChats = async (req, res) => {
     try{
@@ -80,7 +83,7 @@ exports.getGroupMembers = async (req, res) => {
         res.status(200).json({ members, admin });
     }catch(err){
         console.log('GET GROUP MEMBERS ERROR');
-        res.status(500).json({ msg: 'Could not fetch group members' });
+        res.status(500).json({ error: err, msg: 'Could not fetch group members' });
     }
 }
 
@@ -108,6 +111,43 @@ exports.deleteLeaveGroup = async (req, res) => {
         res.status(200).json({ msg: `You left the group <${group.groupName}>` });
     }catch(err){
         console.log('GET LEAVE GROUP ERROR');
-        res.status(500).json({ msg: 'Could not leave group' });
+        res.status(500).json({ error: err, msg: 'Could not leave group' });
+    }
+}
+
+exports.postUploadFile = async (req, res) => {
+    try{
+        const userId = req.user.id;
+        const groupId = req.group.id;
+
+        if(!req.files) {
+            res.status(400).json({ msg: 'No files were uploaded' });
+            return;
+        }
+
+        const file = req.files.myFile; // get the file; name='myFile' is in the <input>
+        
+        const extensionName = path.extname(file.name); // fetch the file extension
+        const allowedExtension = ['.png','.jpg','.jpeg'];
+        if(!allowedExtension.includes(extensionName)){
+            res.status(422).json({ msg: 'Invalid file extension' });
+            return;
+        }
+
+        const date = new Date();
+        const fileName = `Photo_${date}_${userId}_${groupId}_${file.name}`;
+        
+        const fileURL = await S3Services.uploadToS3(file.data, fileName);
+        
+        const chat = await Chat.create({
+            message: fileURL,
+            userId,
+            groupId,
+        });
+
+        res.status(201).json(chat);
+    }catch(err){
+        console.log('POST UPLOAD FILE ERROR');
+        res.status(500).json({ error: err, msg: 'Could not upload file' });
     }
 }

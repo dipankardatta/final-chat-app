@@ -2,6 +2,7 @@ const path = require('path');
 
 require('dotenv').config();
 const express = require('express');
+const fileUpload = require("express-fileupload");
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
@@ -26,6 +27,11 @@ const app = express();
 app.use(cors({ origin: '*' }));
 app.use(bodyParser.json({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(fileUpload({
+    createParentPath: true,
+    limits: { fileSize: 5 * 1024 * 1024 }, // file size limit = 5 MB
+    abortOnLimit: true
+}));
 
 app.use(homepageRoutes);
 app.use('/user', userRoutes);

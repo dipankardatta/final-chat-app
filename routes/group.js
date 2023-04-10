@@ -16,4 +16,6 @@ router.post('/generateRequest', authentication.authenticateUserGroup, requestCon
 
 router.delete('/leaveGroup', authentication.authenticateUserGroup, groupController.deleteLeaveGroup);
 
+router.post('/uploadFile', authentication.authenticateUserGroup, groupController.postUploadFile);
+
 module.exports = router;

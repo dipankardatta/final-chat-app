@@ -14,6 +14,7 @@ const usernameNav = document.getElementById('usernameNav');
 const chatList = document.getElementById('chatList');
 const messageInput = document.getElementById('sendMessage');
 const sendBtn = document.getElementById('sendBtn');
+const uploadFileForm = document.getElementById('uploadFileForm');
 // Groups
 const createGroupBtn = document.getElementById('createGroupBtn');
 const groupNameInput = document.getElementById('groupName');
@@ -87,7 +88,12 @@ function addGroupMemberInDOM(member, admin){
 
         div.appendChild(removeMemberBtn);
 
-        removeMemberBtn.addEventListener('click', () => deleteGroupMember(member.email, div));
+        removeMemberBtn.addEventListener('click', () => {
+            if(!confirm(`Are you sure you want to remove "${member.username}" ?`)){
+                return;
+            }
+            deleteGroupMember(member.email, div);
+        });
     }
 
     groupMembersContainer.appendChild(div);
@@ -192,6 +198,10 @@ function leaveGroup(){
         return;
     }
 
+    if(!confirm('Are you sure you want to leave the group ?')){
+        return;
+    }
+
     axios.delete(`${ORIGIN}/group/leaveGroup?groupId=${CURRENT_GROUP_ID}`, { headers: {Authorization: token} })
     .then((res) => {
         const msg = res.data.msg;
@@ -212,6 +222,8 @@ function addChatInDOM(chat){
     const dateTime = chat.createdAt;
     const username = chat.user.username;
 
+    const fileURL = isValidURL(message) ? message : null; // check if message is a URL or not
+
     const div = document.createElement('div');
     const div2 = document.createElement('div');
 
@@ -220,11 +232,20 @@ function addChatInDOM(chat){
     sub.className = 'ms-1';
 
     if(USERNAME === username){
-        div2.innerText = `${message}`;
+        if(fileURL){
+            div2.innerHTML = `<img src="${fileURL}" alt="image" width="150" height="125" class="rounded">`;
+        }else{
+            div2.innerText = `${message}`;
+        }
         div.className = 'd-flex flex-row-reverse my-1';
         div2.className = 'rounded bg-success text-light px-2 py-1';
     }else{
-        div2.innerText = `${username}: ${message}`;
+        if(fileURL){
+            div2.innerHTML = `<p>${username}:</p>
+            <img src="${fileURL}" alt="image" width="150" height="125" class="rounded">`;
+        }else{
+            div2.innerText = `${username}: ${message}`
+        }
         div.className = 'd-flex flex-row my-1';
         div2.className = 'rounded bg-secondary text-light px-2 py-1';
     }
@@ -289,11 +310,11 @@ function createChatInGroup(){
     axios.post(`${ORIGIN}/group/addChat?groupId=${CURRENT_GROUP_ID}`, chat, { headers: {Authorization: token} })
     .then((res) => {
         const message = res.data.message;
-        const timeStamp = res.data.createdAt;
+        const createdAt = res.data.createdAt;
 
         const chat = {
             message,
-            createdAt: timeStamp,
+            createdAt,
             user: { username: USERNAME }
         };
 
@@ -310,12 +331,48 @@ function createChatInGroup(){
     });
 }
 
+function uploadFile(e){
+    e.preventDefault();
+
+    if(CURRENT_GROUP_ID == null){
+        showErrorInDOM('Please select a group!');
+        return;
+    }
+
+    let formData = new FormData(uploadFileForm);
+    //console.log([...formData]);
+
+    axios.post(`${ORIGIN}/group/uploadFile?groupId=${CURRENT_GROUP_ID}`, formData, 
+    { headers: {Authorization: token, "Content-Type": "multipart/form-data"} })
+    .then((res) => {
+        showSuccessInDOM('File uploaded successfuly!');
+        
+        const message = res.data.message;
+        const createdAt = res.data.createdAt;
+
+        const chat = {
+            message,
+            createdAt,
+            user: { username: USERNAME }
+        };
+
+        addChatInDOM(chat);
+    })
+    .catch((err) => {
+        let msg = "Could not upload file :(";
+        if(err.response && err.response.data && err.response.data.msg){
+            msg = err.response.data.msg;
+        }
+        showErrorInDOM(msg);
+    });
+}
+
 // Requests
 function sendRequest(e){
     e.preventDefault();
 
     if(CURRENT_GROUP_ID == null){
-        showErrorInDOM('Please select a group');
+        showErrorInDOM('Please select a group!');
         return;
     }
 
@@ -445,7 +502,7 @@ function addSentRequestHistoryInDOM(request){
 function getRequestHistory(){
     axios.get(`${ORIGIN}/user/requestHistory`, { headers: {Authorization: token} })
     .then((res) => {
-        const { receivedRequests, sentRequests} = res.data;
+        const { receivedRequests, sentRequests } = res.data;
         receivedRequestsTableBody.innerText = '';
         if(receivedRequests){
             receivedRequests.forEach((receivedRequest) => addReceivedRequestHistoryInDOM(receivedRequest));
@@ -455,7 +512,7 @@ function getRequestHistory(){
             sentRequests.forEach((sentRequest) => addSentRequestHistoryInDOM(sentRequest));
         }
     })
-    .catch((err) => {
+    .catch((err) => {console.log(err);
         let msg = "Could not fetch request history :(";
         if(err.response && err.response.data && err.response.data.msg){
             msg = err.response.data.msg;
@@ -486,6 +543,16 @@ function logout(){
     }
 }
 
+function isValidURL(str){
+    const urlPattern = new RegExp('^(https?:\\/\\/)?'+ // validate protocol
+    '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // validate domain name
+    '((\\d{1,3}\\.){3}\\d{1,3}))'+ // validate OR ip (v4) address
+    '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // validate port and path
+    '(\\?[;&a-z\\d%_.~+=-]*)?'+ // validate query string
+    '(\\#[-a-z\\d_]*)?$','i'); // validate fragment locator
+    return !!urlPattern.test(str);
+}
+
 function parseJwt (token) {
     var base64Url = token.split('.')[1];
     var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -496,12 +563,12 @@ function parseJwt (token) {
     return JSON.parse(jsonPayload);
 }
 
-function showSuccessInDOM(msg, time=3000){
+function showSuccessInDOM(msg='Success', time=3000){
     successMsg.innerText = msg;
     setTimeout(() => successMsg.innerText = '', time);
 }
 
-function showErrorInDOM(msg, time=3000){
+function showErrorInDOM(msg='Something went wrong :(', time=3000){
     errorMsg.innerText = msg;
     setTimeout(() => errorMsg.innerText = '', time);
 }
@@ -519,6 +586,7 @@ window.addEventListener('DOMContentLoaded', () => {
     logoutBtn.addEventListener('click', logout);
     // Chats
     sendBtn.addEventListener('click', createChatInGroup);
+    uploadFileForm.addEventListener('submit', uploadFile);
     // Groups
     createGroupBtn.addEventListener('click', () => createGroupContainer.style.display = 'block');
     closeCreateGroupFormBtn.addEventListener('click', () => createGroupContainer.style.display = 'none');

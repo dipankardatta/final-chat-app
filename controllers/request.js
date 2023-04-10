@@ -144,6 +144,6 @@ exports.getRequestHistory = async (req, res) => {
         res.status(200).json({ receivedRequests, sentRequests });
     }catch(err){
         console.log('GET REQUEST HISTORY ERROR');
-        res.status(500).json({ msg: 'Could not fetch group request history' });
+        res.status(500).json({ error: err, msg: 'Could not fetch group request history' });
     }
 }
