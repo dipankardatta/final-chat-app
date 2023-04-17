@@ -5,7 +5,7 @@ const ArchivedChat = require('../models/archivedChat');
 exports.moveChatsToArchivedChats = async() => {
     console.log('----------------------------------');
     const startTime = Date.now();
-    console.log('Scheduler started at- ' + new Date());
+    console.log('Scheduler started at- ' + new Date().toISOString());
 
     const t = await sequelize.transaction();
     
@@ -27,7 +27,7 @@ exports.moveChatsToArchivedChats = async() => {
         await t.rollback();
     }
 
-    console.log('Scheduler stopped at- ' + new Date());
-    console.log(`Time delay = ${Date.now() - startTime} ms`);
+    console.log('Scheduler stopped at- ' + new Date().toISOString());
+    console.log(`Time taken = ${Date.now() - startTime} ms`);
     console.log('----------------------------------');
 } 

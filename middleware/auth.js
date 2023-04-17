@@ -9,6 +9,11 @@ exports.authenticateUser = async (req, res, next) => {
     try{
         const token = req.headers.authorization;
 
+        if(!token){
+            res.status(400).json({ msg: 'token required' });
+            return;
+        }
+
         const userFromReq = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
         const user = await User.findByPk(userFromReq.userId);
@@ -25,6 +30,15 @@ exports.authenticateUserGroup = async (req, res, next) => {
     try{
         const token = req.headers.authorization;
         const groupId = req.query.groupId;
+
+        if(!token){
+            res.status(400).json({ msg: 'token required' });
+            return;
+        }
+        if(!groupId){
+            res.status(400).json({ msg: 'groupId required' });
+            return;
+        }
 
         const userFromReq = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
@@ -54,6 +68,15 @@ exports.authenticateUserGroup = async (req, res, next) => {
 exports.authenticateGroupAdmin = async (req, res, next) => {
     const token = req.headers.authorization;
     const groupId = req.query.groupId;
+
+    if(!token){
+        res.status(400).json({ msg: 'token required' });
+        return;
+    }
+    if(!groupId){
+        res.status(400).json({ msg: 'groupId required' });
+        return;
+    }
 
     const userFromReq = jwt.verify(token, process.env.JWT_SECRET_KEY);
     const userId = userFromReq.userId;

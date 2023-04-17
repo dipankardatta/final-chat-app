@@ -6,8 +6,8 @@ const Request = require('../models/request');
 
 exports.postGenerateRequest = async (req, res) => {
     try{
-        const userId = req.user.id;
-        const groupId = req.group.id;
+        const user = req.user;
+        const group = req.group;
         const receiverEmail = req.body.email;
 
         if(!receiverEmail){
@@ -15,11 +15,28 @@ exports.postGenerateRequest = async (req, res) => {
             return;
         }
 
+        if(receiverEmail === user.email){
+            res.status(400).json({ msg: 'You cannot send request to yourself' });
+            return;
+        }
+
+        const groupMember = await Group.findOne({ 
+            where: { id: group.id },
+            include: [{
+                model: User,
+                where: { email: receiverEmail }
+            }]
+        });
+        if(groupMember){
+            res.status(400).json({ msg: 'User already in group' });
+            return;
+        }
+
         const request = await Request.create({
             email: receiverEmail,
             status: 'pending',
-            userId,
-            groupId
+            userId: user.id,
+            groupId: group.id
         });
 
         res.status(201).json(request);
@@ -52,7 +69,7 @@ exports.getPendingRequests = async (req, res) => {
 
         res.status(200).json(requests);
     }catch(err){
-        console.log(err);
+        console.log('GET PENDING REQUESTS ERROR');
         res.status(500).json({ error: err, msg: 'Could get requests'});
     }
 }
@@ -99,7 +116,7 @@ exports.postConfirmRequest = async (req, res) => {
 
         res.status(200).json({ status: 'accepted' });
     }catch(err){
-        console.log(err);
+        console.log('POST CONFIRM REQUEST ERROR');
         res.status(500).json({ error: err, msg: 'Could not confirm request'});
     }
 }

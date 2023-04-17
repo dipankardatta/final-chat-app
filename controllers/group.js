@@ -71,7 +71,7 @@ exports.getGroupMembers = async (req, res) => {
             }]
         });
 
-        const admin = await Admin.findOne({
+        const admins = await Admin.findAll({
             where: { groupId },
             attributes: [],
             include: [{
@@ -80,7 +80,7 @@ exports.getGroupMembers = async (req, res) => {
             }]
         });
 
-        res.status(200).json({ members, admin });
+        res.status(200).json({ members, admins });
     }catch(err){
         console.log('GET GROUP MEMBERS ERROR');
         res.status(500).json({ error: err, msg: 'Could not fetch group members' });
@@ -92,18 +92,22 @@ exports.deleteLeaveGroup = async (req, res) => {
         const user = req.user;
         const group = req.group;
 
-        const adminCheck = await Admin.findOne({
-            where: {
-                [Op.and]: [
-                    { userId: user.id },
-                    { groupId: group.id }
-                ]
-            }
-        });
-        
+        const admins = await Admin.findAll({ where: { groupId: group.id } });
+        const adminCheck = admins.filter((admin) => admin.userId === user.id);
+
         if(adminCheck){
-            res.status(400).json({ msg: `Admin cannot leave the group` });
-            return;
+            if(admins.length <= 1){
+                res.status(403).json({ msg: 'Cannot leave group. Group must have atleast 1 Admin' });
+                return;
+            }
+            await Admin.destroy({
+                where: {
+                    [Op.and]: [
+                        { userId: user.id },
+                        { groupId: group.id }
+                    ]
+                } 
+            });
         }
 
         await group.removeUser(user); // update user_group junction table
@@ -134,7 +138,7 @@ exports.postUploadFile = async (req, res) => {
             return;
         }
 
-        const date = new Date();
+        const date = new Date().toISOString().replace(/:/g,'-');
         const fileName = `Photo_${date}_${userId}_${groupId}_${file.name}`;
         
         const fileURL = await S3Services.uploadToS3(file.data, fileName);

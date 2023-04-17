@@ -6,7 +6,7 @@ const token = localStorage.getItem('token');
 const decodedToken = parseJwt(token);
 const USERNAME = decodedToken.username;
 const USER_ID = decodedToken.userId;
-const EMAIL = decodedToken.email;
+const USER_EMAIL = decodedToken.email;
 
 // Navbar
 const usernameNav = document.getElementById('usernameNav');
@@ -25,7 +25,7 @@ const groupsContainer = document.getElementById('groupsContainer');
 const leaveGroupBtn = document.getElementById('leaveGroupBtn');
 // Group members
 const groupMembersContainer = document.getElementById('groupMembersContainer');
-const groupMembersOuterContainer = document.getElementById('groupMembersOuterContainer');
+const groupMembersTableBody = document.getElementById('groupMembersTableBody');
 const showGroupMembersBtn = document.getElementById('showGroupMembersBtn');
 const closeGroupMembersBtn = document.getElementById('closeGroupMembersBtn');
 // Request
@@ -54,13 +54,34 @@ function showUserInfoInDOM(){
 }
 
 //group members
-function deleteGroupMember(memberEmail, memberDiv){
+function promoteMemberToAdmin(memberEmail){
+    const memberObj = {
+        memberEmail
+    };
+
+    axios.post(`${ORIGIN}/group/admin/promoteGroupMemberToAdmin?groupId=${CURRENT_GROUP_ID}`, memberObj, 
+    { headers: {Authorization: token} })
+    .then((res) => {
+        const msg = res.data.msg;
+        showSuccessInDOM(msg, 5000);
+        getGroupMembers();
+    })
+    .catch((err) => {console.log(err);
+        let msg = "Could not promote group member to Admin :(";
+        if(err.response && err.response.data && err.response.data.msg){
+            msg = err.response.data.msg;
+        }
+        showErrorInDOM(msg);
+    });
+}
+
+function removeGroupMember(memberEmail, tr){
     axios.delete(`${ORIGIN}/group/admin/removeGroupMember?groupId=${CURRENT_GROUP_ID}&email=${memberEmail}`, 
     { headers: {Authorization: token} })
     .then((res) => {
         const msg = res.data.msg;
         showSuccessInDOM(msg, 5000);
-        groupMembersContainer.removeChild(memberDiv);
+        groupMembersTableBody.removeChild(tr);
     })
     .catch((err) => {
         let msg = "Could not delete group member :(";
@@ -71,32 +92,57 @@ function deleteGroupMember(memberEmail, memberDiv){
     });
 }
 
-function addGroupMemberInDOM(member, admin){
-    const div = document.createElement('div');
-    div.className = 'p-1';
+function addGroupMemberInDOM(member, admins, currentUserAdmin){
+    const memberAdminCheck = admins.filter((admin) => admin.user.email === member.email);
+    const memberIsAdmin = memberAdminCheck.length === 0 ? false : true;
 
-    if(member.email === admin.email){
-        div.innerText = member.username + ' : Admin';
-    }else{
-        div.innerText = member.username;
+    const tr = document.createElement('tr');
+    if(member.username === USERNAME){
+        tr.classList.add('table-info');
+    }
+    
+    tr.innerHTML = `
+        <td>${member.username}</td>
+        <td>${member.email}</td>
+        <td style="color: ${memberIsAdmin ? 'green' : 'black'};">
+            ${memberIsAdmin ? 'Admin' : 'Member'}
+        </td>
+        <td>
+            <button class='btn btn-sm btn-outline-success'>
+                Admin
+            </button>
+            <button class='btn btn-sm btn-outline-danger'>
+                Remove
+            </button>
+        </td>
+    `;
+
+    groupMembersTableBody.appendChild(tr);
+
+    if(!currentUserAdmin || memberIsAdmin){
+        tr.children[3].innerText = 'None';
+        return;
     }
 
-    if(EMAIL === admin.email && EMAIL !== member.email){
-        const removeMemberBtn = document.createElement('button');
-        removeMemberBtn.innerText = 'Remove';
-        removeMemberBtn.className = 'btn btn-sm btn-danger ms-2';
-
-        div.appendChild(removeMemberBtn);
-
-        removeMemberBtn.addEventListener('click', () => {
-            if(!confirm(`Are you sure you want to remove "${member.username}" ?`)){
-                return;
-            }
-            deleteGroupMember(member.email, div);
-        });
-    }
-
-    groupMembersContainer.appendChild(div);
+    const promoteToAdminBtn = tr.children[3].children[0];
+    promoteToAdminBtn.addEventListener('click', (e) => {
+        const tr = e.target.parentElement.parentElement;
+        const memberName = tr.children[0].innerText;
+        const memberEmail = tr.children[1].innerText;
+        if(confirm(`Promote "${memberName}" to Admin ?`)){
+            promoteMemberToAdmin(memberEmail);
+        }
+    });
+    
+    const removeMemberBtn = tr.children[3].children[1];
+    removeMemberBtn.addEventListener('click', (e) => {
+        const tr = e.target.parentElement.parentElement;
+        const memberName = tr.children[0].innerText;
+        const memberEmail = tr.children[1].innerText;
+        if(confirm(`Remove "${memberName}" from group ?`)){
+            removeGroupMember(memberEmail, tr);
+        }
+    });
 }
 
 function getGroupMembers(){
@@ -108,10 +154,12 @@ function getGroupMembers(){
     axios.get(`${ORIGIN}/group/members?groupId=${CURRENT_GROUP_ID}`, { headers: {Authorization: token} })
     .then((res) => {
         const members = res.data.members;
-        const admin = res.data.admin.user;
-        groupMembersOuterContainer.style.display = 'block';
-        groupMembersContainer.innerText = '';
-        members.forEach((member) => addGroupMemberInDOM(member, admin));
+        const admins = res.data.admins;
+        groupMembersContainer.style.display = 'block';
+        groupMembersTableBody.innerText = '';
+        const currentUserAdminCheck = admins.filter((admin) => admin.user.email === USER_EMAIL);
+        const currentUserAdmin = currentUserAdminCheck.length === 0 ? false : true;
+        members.forEach((member) => addGroupMemberInDOM(member, admins, currentUserAdmin));
     })
     .catch((err) => {
         let msg = "Could not fetch group members :(";
@@ -130,7 +178,7 @@ function addGroupInDOM(group){
     groupBtn.className = 'btn btn-sm btn-outline-primary me-1';
 
     groupBtn.addEventListener('click', (e) => {
-        groupMembersOuterContainer.style.display = 'none'
+        groupMembersContainer.style.display = 'none';
         const groupBtnClicked = e.target;
         CURRENT_GROUP_ID = groupBtnClicked.id;
         const groupBtns = groupsContainer.children;
@@ -206,6 +254,8 @@ function leaveGroup(){
     .then((res) => {
         const msg = res.data.msg;
         showSuccessInDOM(msg, 5000);
+        getGroups();
+        CURRENT_GROUP_ID = null;
     })
     .catch((err) => {
         let msg = "Could not leave group :(";
@@ -409,13 +459,14 @@ function confirmRequest(groupId, status, RequestDiv){
     
     axios.post(`${ORIGIN}/user/confirmGroupRequest?groupId=${groupId}`, confirmation, { headers: {Authorization: token} })
     .then((res) => {
-        const status = res.data.msg;
+        const status = res.data.status;
         if(status === 'accepted'){
             showSuccessInDOM('Request accepted!');
         }else{
-            showSuccessInDOM('Request rejected!');
+            showErrorInDOM('Request rejected!');
         }
         receivedRequestsContainer.removeChild(RequestDiv);
+        getGroups();
     })
     .catch((err) => {
         let msg = "Could not confirm request :(";
@@ -434,6 +485,7 @@ function addRequestInDOM(request){
     const div = document.createElement('div');
     div.innerText = `Accept the request to join the group "${groupName}" sent by user "${username}" ?`;
     div.id= groupId;
+    div.className = 'p-1';
 
     const acceptRequestBtn = document.createElement('button');
     acceptRequestBtn.innerText = 'Accept';
@@ -594,7 +646,7 @@ window.addEventListener('DOMContentLoaded', () => {
     leaveGroupBtn.addEventListener('click', leaveGroup);
     // Group Members
     showGroupMembersBtn.addEventListener('click', getGroupMembers);
-    closeGroupMembersBtn.addEventListener('click', () => groupMembersOuterContainer.style.display = 'none');
+    closeGroupMembersBtn.addEventListener('click', () => groupMembersContainer.style.display = 'none');
     // Requests
     receivedRequestsBtn.addEventListener('click', () => {
         getPendingRequests();

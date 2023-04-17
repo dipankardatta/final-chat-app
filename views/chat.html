@@ -127,11 +127,30 @@
   </div>
 
   <!-- Group Members -->
-  <div class="container bg-light col-md-8 col-lg-7 col-xl-6 my-1 py-2" id="groupMembersOuterContainer" 
+  <div class="container bg-light col-md-8 col-lg-7 col-xl-6 my-1 py-2" id="groupMembersContainer" 
   style="display: none;">
     <button class="btn btn-sm btn-danger float-end" id="closeGroupMembersBtn">X</button>
     <h3 class="text-center text-success">Group Members</h3>
-    <div class="container bg-light my-1" id="groupMembersContainer"></div>
+    <div class="container" id="groupMembersTableContainer">
+      <table class="table table-sm table-light table-striped">
+        <thead>
+          <tr>
+            <th scope="col">Username</th>
+            <th scope="col">Email</th>
+            <th scope="col">Position</th>
+            <th scope="col">Action</th>
+          </tr>
+        </thead>
+        <tbody id="groupMembersTableBody">
+          <!-- <tr>
+            <td>abc</td>
+            <td>abc@xyz.com</td>
+            <td>Admin</td>
+            <td>Admin/Remove</td>
+          </tr> -->
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Request History -->

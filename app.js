@@ -72,8 +72,8 @@ Request.belongsTo(Group);
 User.hasMany(Admin);
 Admin.belongsTo(User);
 
-// Group -> Admin : one to one
-Group.hasOne(Admin);
+// Group -> Admin : one to many
+Group.hasMany(Admin);
 Admin.belongsTo(Group);
 
 // User -> ArchivedChat : one to many
@@ -88,7 +88,9 @@ ArchivedChat.belongsTo(Group);
 
 // Start the server
 sequelize.sync()
-.then((result) => app.listen(process.env.PORT || 3000, () => console.log('SERVER STARTED')))
+.then((result) => {
+    app.listen(process.env.PORT || 3000, () => console.log('SERVER STARTED'));
+})
 .catch((err) => console.log(err));
 
 // Move all the chats from 'Chats' to 'ArchivedChats' DB-table at 23:59:59
