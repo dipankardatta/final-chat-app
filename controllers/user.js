@@ -1,9 +1,9 @@
-const User = require('../models/user'); 
+const User = require('../models/user');
 const Group = require('../models/group');
 const Admin = require('../models/admin');
 
 exports.getUserGroups = async (req, res) => {
-    try{
+    try {
         const user = req.user;
 
         const groups = await Group.findAll({
@@ -15,15 +15,15 @@ exports.getUserGroups = async (req, res) => {
             }]
         });
 
-        res.status(200).json(groups); 
-    }catch(err){
+        res.status(200).json(groups);
+    } catch (err) {
         console.log('GET USER GROUPS ERROR');
         res.status(500).json({ error: err, msg: 'Could not fetch current user groups' });
     }
 }
 
 exports.postCreateGroup = async (req, res) => {
-    try{
+    try {
         const user = req.user;
         const groupName = req.body.groupName;
 
@@ -39,7 +39,7 @@ exports.postCreateGroup = async (req, res) => {
         });
 
         res.status(201).json(group);
-    }catch(err){
+    } catch (err) {
         console.log('POST CREATE GROUP ERROR');
         res.status(500).json({ error: err, msg: 'Could not create group' });
     }
