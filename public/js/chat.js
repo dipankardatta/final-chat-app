@@ -1,4 +1,4 @@
-const ORIGIN = window.location.origin;
+const ORIGIN = 'http://localhost:3000'
 const STORED_CHATS_LENGTH = 10;
 let CURRENT_GROUP_ID = null;
 
@@ -41,7 +41,7 @@ const receivedRequestsOuterContainer = document.getElementById('receivedRequests
 const showRequestHistoryBtn = document.getElementById('showRequestHistoryBtn');
 const closeRequestHistoryBtn = document.getElementById('closeRequestHistoryBtn');
 const requestHistoryContainer = document.getElementById('requestHistoryContainer');
-const receivedRequestsTableBody =  document.getElementById('receivedRequestsTableBody');
+const receivedRequestsTableBody = document.getElementById('receivedRequestsTableBody');
 const sentRequestsTableBody = document.getElementById('sentRequestsTableBody');
 // Error/Success/Logout
 const errorMsg = document.getElementById('errMsg');
@@ -49,58 +49,59 @@ const successMsg = document.getElementById('successMsg');
 const logoutBtn = document.getElementById('logoutBtn');
 
 //user info
-function showUserInfoInDOM(){
+function showUserInfoInDOM() {
     usernameNav.innerText = USERNAME.charAt(0).toUpperCase() + USERNAME.slice(1);
 }
 
 //group members
-function promoteMemberToAdmin(memberEmail){
+function promoteMemberToAdmin(memberEmail) {
     const memberObj = {
         memberEmail
     };
 
-    axios.post(`${ORIGIN}/group/admin/promoteGroupMemberToAdmin?groupId=${CURRENT_GROUP_ID}`, memberObj, 
-    { headers: {Authorization: token} })
-    .then((res) => {
-        const msg = res.data.msg;
-        showSuccessInDOM(msg, 5000);
-        getGroupMembers();
-    })
-    .catch((err) => {console.log(err);
-        let msg = "Could not promote group member to Admin :(";
-        if(err.response && err.response.data && err.response.data.msg){
-            msg = err.response.data.msg;
-        }
-        showErrorInDOM(msg);
-    });
+    axios.post(`${ORIGIN}/group/admin/promoteGroupMemberToAdmin?groupId=${CURRENT_GROUP_ID}`, memberObj,
+        { headers: { Authorization: token } })
+        .then((res) => {
+            const msg = res.data.msg;
+            showSuccessInDOM(msg, 5000);
+            getGroupMembers();
+        })
+        .catch((err) => {
+            console.log(err);
+            let msg = "Could not promote group member to Admin :(";
+            if (err.response && err.response.data && err.response.data.msg) {
+                msg = err.response.data.msg;
+            }
+            showErrorInDOM(msg);
+        });
 }
 
-function removeGroupMember(memberEmail, tr){
-    axios.delete(`${ORIGIN}/group/admin/removeGroupMember?groupId=${CURRENT_GROUP_ID}&email=${memberEmail}`, 
-    { headers: {Authorization: token} })
-    .then((res) => {
-        const msg = res.data.msg;
-        showSuccessInDOM(msg, 5000);
-        groupMembersTableBody.removeChild(tr);
-    })
-    .catch((err) => {
-        let msg = "Could not delete group member :(";
-        if(err.response && err.response.data && err.response.data.msg){
-            msg = err.response.data.msg;
-        }
-        showErrorInDOM(msg);
-    });
+function removeGroupMember(memberEmail, tr) {
+    axios.delete(`${ORIGIN}/group/admin/removeGroupMember?groupId=${CURRENT_GROUP_ID}&email=${memberEmail}`,
+        { headers: { Authorization: token } })
+        .then((res) => {
+            const msg = res.data.msg;
+            showSuccessInDOM(msg, 5000);
+            groupMembersTableBody.removeChild(tr);
+        })
+        .catch((err) => {
+            let msg = "Could not delete group member :(";
+            if (err.response && err.response.data && err.response.data.msg) {
+                msg = err.response.data.msg;
+            }
+            showErrorInDOM(msg);
+        });
 }
 
-function addGroupMemberInDOM(member, admins, currentUserAdmin){
+function addGroupMemberInDOM(member, admins, currentUserAdmin) {
     const memberAdminCheck = admins.filter((admin) => admin.user.email === member.email);
     const memberIsAdmin = memberAdminCheck.length === 0 ? false : true;
 
     const tr = document.createElement('tr');
-    if(member.username === USERNAME){
+    if (member.username === USERNAME) {
         tr.classList.add('table-info');
     }
-    
+
     tr.innerHTML = `
         <td>${member.username}</td>
         <td>${member.email}</td>
@@ -119,7 +120,7 @@ function addGroupMemberInDOM(member, admins, currentUserAdmin){
 
     groupMembersTableBody.appendChild(tr);
 
-    if(!currentUserAdmin || memberIsAdmin){
+    if (!currentUserAdmin || memberIsAdmin) {
         tr.children[3].innerText = 'None';
         return;
     }
@@ -129,49 +130,49 @@ function addGroupMemberInDOM(member, admins, currentUserAdmin){
         const tr = e.target.parentElement.parentElement;
         const memberName = tr.children[0].innerText;
         const memberEmail = tr.children[1].innerText;
-        if(confirm(`Promote "${memberName}" to Admin ?`)){
+        if (confirm(`Promote "${memberName}" to Admin ?`)) {
             promoteMemberToAdmin(memberEmail);
         }
     });
-    
+
     const removeMemberBtn = tr.children[3].children[1];
     removeMemberBtn.addEventListener('click', (e) => {
         const tr = e.target.parentElement.parentElement;
         const memberName = tr.children[0].innerText;
         const memberEmail = tr.children[1].innerText;
-        if(confirm(`Remove "${memberName}" from group ?`)){
+        if (confirm(`Remove "${memberName}" from group ?`)) {
             removeGroupMember(memberEmail, tr);
         }
     });
 }
 
-function getGroupMembers(){
-    if(!CURRENT_GROUP_ID){
+function getGroupMembers() {
+    if (!CURRENT_GROUP_ID) {
         showErrorInDOM('Please select a group!');
         return;
     }
 
-    axios.get(`${ORIGIN}/group/members?groupId=${CURRENT_GROUP_ID}`, { headers: {Authorization: token} })
-    .then((res) => {
-        const members = res.data.members;
-        const admins = res.data.admins;
-        groupMembersContainer.style.display = 'block';
-        groupMembersTableBody.innerText = '';
-        const currentUserAdminCheck = admins.filter((admin) => admin.user.email === USER_EMAIL);
-        const currentUserAdmin = currentUserAdminCheck.length === 0 ? false : true;
-        members.forEach((member) => addGroupMemberInDOM(member, admins, currentUserAdmin));
-    })
-    .catch((err) => {
-        let msg = "Could not fetch group members :(";
-        if(err.response && err.response.data && err.response.data.msg){
-            msg = err.response.data.msg;
-        }
-        showErrorInDOM(msg);
-    });
+    axios.get(`${ORIGIN}/group/members?groupId=${CURRENT_GROUP_ID}`, { headers: { Authorization: token } })
+        .then((res) => {
+            const members = res.data.members;
+            const admins = res.data.admins;
+            groupMembersContainer.style.display = 'block';
+            groupMembersTableBody.innerText = '';
+            const currentUserAdminCheck = admins.filter((admin) => admin.user.email === USER_EMAIL);
+            const currentUserAdmin = currentUserAdminCheck.length === 0 ? false : true;
+            members.forEach((member) => addGroupMemberInDOM(member, admins, currentUserAdmin));
+        })
+        .catch((err) => {
+            let msg = "Could not fetch group members :(";
+            if (err.response && err.response.data && err.response.data.msg) {
+                msg = err.response.data.msg;
+            }
+            showErrorInDOM(msg);
+        });
 }
 
 //groups
-function addGroupInDOM(group){
+function addGroupInDOM(group) {
     const groupBtn = document.createElement('button');
     groupBtn.innerText = group.groupName;
     groupBtn.id = group.id;
@@ -182,7 +183,7 @@ function addGroupInDOM(group){
         const groupBtnClicked = e.target;
         CURRENT_GROUP_ID = groupBtnClicked.id;
         const groupBtns = groupsContainer.children;
-        for(gb of groupBtns){
+        for (gb of groupBtns) {
             gb.classList.remove('active');
         }
         groupBtnClicked.classList.add('active');
@@ -193,27 +194,27 @@ function addGroupInDOM(group){
     groupsContainer.appendChild(groupBtn);
 }
 
-function getGroups(){
-    axios.get(`${ORIGIN}/user/groups`, { headers: {Authorization: token} })
-    .then((res) => {
-        const groups = res.data;
+function getGroups() {
+    axios.get(`${ORIGIN}/user/groups`, { headers: { Authorization: token } })
+        .then((res) => {
+            const groups = res.data;
 
-        groupsContainer.innerText = '';
-        groups.forEach((group) => addGroupInDOM(group));
-    })
-    .catch((err) => {
-        let msg = "Could not fetch user's groups :(";
-        if(err.response && err.response.data && err.response.data.msg){
-            msg = err.response.data.msg;
-        }
-        showErrorInDOM(msg);
-    });
+            groupsContainer.innerText = '';
+            groups.forEach((group) => addGroupInDOM(group));
+        })
+        .catch((err) => {
+            let msg = "Could not fetch user's groups :(";
+            if (err.response && err.response.data && err.response.data.msg) {
+                msg = err.response.data.msg;
+            }
+            showErrorInDOM(msg);
+        });
 }
 
-function createGroup(e){
+function createGroup(e) {
     e.preventDefault();
 
-    if(groupNameInput.value === ''){
+    if (groupNameInput.value === '') {
         showErrorInDOM('Enter group name!');
         showErrorInInputFieldInDOM(groupNameInput);
         return;
@@ -222,52 +223,52 @@ function createGroup(e){
     const group = {
         groupName: groupNameInput.value
     };
-    
-    axios.post(`${ORIGIN}/user/createGroup`, group, { headers: {Authorization: token} })
-    .then((res) => {
-        const group = res.data;
-        addGroupInDOM(group);
-        showSuccessInDOM('Group Created!');
-        groupNameInput.value = '';
-        createGroupContainer.style.display = 'none';
-    })
-    .catch((err) => {
-        let msg = "Could not create group :(";
-        if(err.response && err.response.data && err.response.data.msg){
-            msg = err.response.data.msg;
-        }
-        showErrorInDOM(msg);
-    });
+
+    axios.post(`${ORIGIN}/user/createGroup`, group, { headers: { Authorization: token } })
+        .then((res) => {
+            const group = res.data;
+            addGroupInDOM(group);
+            showSuccessInDOM('Group Created!');
+            groupNameInput.value = '';
+            createGroupContainer.style.display = 'none';
+        })
+        .catch((err) => {
+            let msg = "Could not create group :(";
+            if (err.response && err.response.data && err.response.data.msg) {
+                msg = err.response.data.msg;
+            }
+            showErrorInDOM(msg);
+        });
 }
 
-function leaveGroup(){
-    if(!CURRENT_GROUP_ID){
+function leaveGroup() {
+    if (!CURRENT_GROUP_ID) {
         showErrorInDOM('Please select a group!');
         return;
     }
 
-    if(!confirm('Are you sure you want to leave the group ?')){
+    if (!confirm('Are you sure you want to leave the group ?')) {
         return;
     }
 
-    axios.delete(`${ORIGIN}/group/leaveGroup?groupId=${CURRENT_GROUP_ID}`, { headers: {Authorization: token} })
-    .then((res) => {
-        const msg = res.data.msg;
-        showSuccessInDOM(msg, 5000);
-        getGroups();
-        CURRENT_GROUP_ID = null;
-    })
-    .catch((err) => {
-        let msg = "Could not leave group :(";
-        if(err.response && err.response.data && err.response.data.msg){
-            msg = err.response.data.msg;
-        }
-        showErrorInDOM(msg);
-    });
+    axios.delete(`${ORIGIN}/group/leaveGroup?groupId=${CURRENT_GROUP_ID}`, { headers: { Authorization: token } })
+        .then((res) => {
+            const msg = res.data.msg;
+            showSuccessInDOM(msg, 5000);
+            getGroups();
+            CURRENT_GROUP_ID = null;
+        })
+        .catch((err) => {
+            let msg = "Could not leave group :(";
+            if (err.response && err.response.data && err.response.data.msg) {
+                msg = err.response.data.msg;
+            }
+            showErrorInDOM(msg);
+        });
 }
 
 //chats
-function addChatInDOM(chat){
+function addChatInDOM(chat) {
     const message = chat.message;
     const dateTime = chat.createdAt;
     const username = chat.user.username;
@@ -281,19 +282,19 @@ function addChatInDOM(chat){
     sub.innerText = convertToTime(dateTime, 'HHMM');
     sub.className = 'ms-1';
 
-    if(USERNAME === username){
-        if(fileURL){
+    if (USERNAME === username) {
+        if (fileURL) {
             div2.innerHTML = `<img src="${fileURL}" alt="image" width="150" height="125" class="rounded">`;
-        }else{
+        } else {
             div2.innerText = `${message}`;
         }
         div.className = 'd-flex flex-row-reverse my-1';
         div2.className = 'rounded bg-success text-light px-2 py-1';
-    }else{
-        if(fileURL){
+    } else {
+        if (fileURL) {
             div2.innerHTML = `<p>${username}:</p>
             <img src="${fileURL}" alt="image" width="150" height="125" class="rounded">`;
-        }else{
+        } else {
             div2.innerText = `${username}: ${message}`
         }
         div.className = 'd-flex flex-row my-1';
@@ -305,49 +306,49 @@ function addChatInDOM(chat){
     chatList.appendChild(div);
 }
 
-function getGroupChats(groupId){
+function getGroupChats(groupId) {
     const storedChatsArr = localStorage.getItem('storedChatsArr') ? JSON.parse(localStorage.getItem('storedChatsArr')) : [];
     const oldGroupChatsObjArr = storedChatsArr.filter((oldGroupChatObj) => oldGroupChatObj.groupId === groupId);
-    const oldGroupChatsObj =  oldGroupChatsObjArr.length > 0 ? oldGroupChatsObjArr[0] : { groupId , chats: [] };
-    if(oldGroupChatsObjArr.length === 0){
+    const oldGroupChatsObj = oldGroupChatsObjArr.length > 0 ? oldGroupChatsObjArr[0] : { groupId, chats: [] };
+    if (oldGroupChatsObjArr.length === 0) {
         storedChatsArr.push(oldGroupChatsObj);
     }
     const oldGroupChats = oldGroupChatsObj.chats;
-    const lastMessageId = oldGroupChats.length > 0 ? oldGroupChats[oldGroupChats.length-1].id : -1;
+    const lastMessageId = oldGroupChats.length > 0 ? oldGroupChats[oldGroupChats.length - 1].id : -1;
 
-    axios.get(`${ORIGIN}/group/chats?groupId=${groupId}&lastmsgid=${lastMessageId}`, { headers: {Authorization: token} })
-    .then((res) => {
-        const newGroupChats = res.data;
+    axios.get(`${ORIGIN}/group/chats?groupId=${groupId}&lastmsgid=${lastMessageId}`, { headers: { Authorization: token } })
+        .then((res) => {
+            const newGroupChats = res.data;
 
-        const totalGroupChats = [...oldGroupChats, ...newGroupChats];
-        const latestGroupChats = totalGroupChats.length > STORED_CHATS_LENGTH ? 
-            totalGroupChats.slice(totalGroupChats.length - STORED_CHATS_LENGTH) : totalGroupChats;
-        storedChatsArr.forEach((oldGroupChatObj) => {
-            if(oldGroupChatObj.groupId === groupId){
-                oldGroupChatObj.chats = latestGroupChats;
+            const totalGroupChats = [...oldGroupChats, ...newGroupChats];
+            const latestGroupChats = totalGroupChats.length > STORED_CHATS_LENGTH ?
+                totalGroupChats.slice(totalGroupChats.length - STORED_CHATS_LENGTH) : totalGroupChats;
+            storedChatsArr.forEach((oldGroupChatObj) => {
+                if (oldGroupChatObj.groupId === groupId) {
+                    oldGroupChatObj.chats = latestGroupChats;
+                }
+            });
+            localStorage.setItem('storedChatsArr', JSON.stringify(storedChatsArr));
+
+            chatList.innerText = '';
+            latestGroupChats.forEach((chat) => addChatInDOM(chat));
+        })
+        .catch((err) => {
+            let msg = "Could not fetch group chats :(";
+            if (err.response && err.response.data && err.response.data.msg) {
+                msg = err.response.data.msg;
             }
+            showErrorInDOM(msg);
         });
-        localStorage.setItem('storedChatsArr', JSON.stringify(storedChatsArr));
-
-        chatList.innerText = '';
-        latestGroupChats.forEach((chat) => addChatInDOM(chat));
-    })
-    .catch((err) => {
-        let msg = "Could not fetch group chats :(";
-        if(err.response && err.response.data && err.response.data.msg){
-            msg = err.response.data.msg;
-        }
-        showErrorInDOM(msg);
-    });
 }
 
-function createChatInGroup(){
-    if(CURRENT_GROUP_ID == null){
+function createChatInGroup() {
+    if (CURRENT_GROUP_ID == null) {
         showErrorInDOM('Please select a group!');
         return;
     }
 
-    if(messageInput.value === ''){
+    if (messageInput.value === '') {
         showErrorInDOM('Please enter message!');
         showErrorInInputFieldInDOM(messageInput);
         return;
@@ -357,34 +358,34 @@ function createChatInGroup(){
         message: messageInput.value
     };
 
-    axios.post(`${ORIGIN}/group/addChat?groupId=${CURRENT_GROUP_ID}`, chat, { headers: {Authorization: token} })
-    .then((res) => {
-        const message = res.data.message;
-        const createdAt = res.data.createdAt;
+    axios.post(`${ORIGIN}/group/addChat?groupId=${CURRENT_GROUP_ID}`, chat, { headers: { Authorization: token } })
+        .then((res) => {
+            const message = res.data.message;
+            const createdAt = res.data.createdAt;
 
-        const chat = {
-            message,
-            createdAt,
-            user: { username: USERNAME }
-        };
+            const chat = {
+                message,
+                createdAt,
+                user: { username: USERNAME }
+            };
 
-        addChatInDOM(chat);
+            addChatInDOM(chat);
 
-        messageInput.value = '';
-    })
-    .catch((err) => {
-        let msg = "Could not add chat :(";
-        if(err.response && err.response.data && err.response.data.msg){
-            msg = err.response.data.msg;
-        }
-        showErrorInDOM(msg);
-    });
+            messageInput.value = '';
+        })
+        .catch((err) => {
+            let msg = "Could not add chat :(";
+            if (err.response && err.response.data && err.response.data.msg) {
+                msg = err.response.data.msg;
+            }
+            showErrorInDOM(msg);
+        });
 }
 
-function uploadFile(e){
+function uploadFile(e) {
     e.preventDefault();
 
-    if(CURRENT_GROUP_ID == null){
+    if (CURRENT_GROUP_ID == null) {
         showErrorInDOM('Please select a group!');
         return;
     }
@@ -392,41 +393,41 @@ function uploadFile(e){
     let formData = new FormData(uploadFileForm);
     //console.log([...formData]);
 
-    axios.post(`${ORIGIN}/group/uploadFile?groupId=${CURRENT_GROUP_ID}`, formData, 
-    { headers: {Authorization: token, "Content-Type": "multipart/form-data"} })
-    .then((res) => {
-        showSuccessInDOM('File uploaded successfuly!');
-        
-        const message = res.data.message;
-        const createdAt = res.data.createdAt;
+    axios.post(`${ORIGIN}/group/uploadFile?groupId=${CURRENT_GROUP_ID}`, formData,
+        { headers: { Authorization: token, "Content-Type": "multipart/form-data" } })
+        .then((res) => {
+            showSuccessInDOM('File uploaded successfuly!');
 
-        const chat = {
-            message,
-            createdAt,
-            user: { username: USERNAME }
-        };
+            const message = res.data.message;
+            const createdAt = res.data.createdAt;
 
-        addChatInDOM(chat);
-    })
-    .catch((err) => {
-        let msg = "Could not upload file :(";
-        if(err.response && err.response.data && err.response.data.msg){
-            msg = err.response.data.msg;
-        }
-        showErrorInDOM(msg);
-    });
+            const chat = {
+                message,
+                createdAt,
+                user: { username: USERNAME }
+            };
+
+            addChatInDOM(chat);
+        })
+        .catch((err) => {
+            let msg = "Could not upload file :(";
+            if (err.response && err.response.data && err.response.data.msg) {
+                msg = err.response.data.msg;
+            }
+            showErrorInDOM(msg);
+        });
 }
 
 // Requests
-function sendRequest(e){
+function sendRequest(e) {
     e.preventDefault();
 
-    if(CURRENT_GROUP_ID == null){
+    if (CURRENT_GROUP_ID == null) {
         showErrorInDOM('Please select a group!');
         return;
     }
 
-    if(requestEmailInput.value === ''){
+    if (requestEmailInput.value === '') {
         showErrorInDOM('Enter receiver email!');
         showErrorInInputFieldInDOM(requestEmailInput);
         return;
@@ -436,55 +437,55 @@ function sendRequest(e){
         email: requestEmailInput.value
     };
 
-    axios.post(`${ORIGIN}/group/generateRequest?groupId=${CURRENT_GROUP_ID}`, request, { headers: {Authorization: token} })
-    .then((res) => {
-        const request = res.data;
-        showSuccessInDOM('Request sent!');
-        requestEmailInput.value = '';
-        sendRequestContainer.style.display = 'none';
-    })
-    .catch((err) => {
-        let msg = "Could not send group request :(";
-        if(err.response && err.response.data && err.response.data.msg){
-            msg = err.response.data.msg;
-        }
-        showErrorInDOM(msg);
-    });
+    axios.post(`${ORIGIN}/group/generateRequest?groupId=${CURRENT_GROUP_ID}`, request, { headers: { Authorization: token } })
+        .then((res) => {
+            const request = res.data;
+            showSuccessInDOM('Request sent!');
+            requestEmailInput.value = '';
+            sendRequestContainer.style.display = 'none';
+        })
+        .catch((err) => {
+            let msg = "Could not send group request :(";
+            if (err.response && err.response.data && err.response.data.msg) {
+                msg = err.response.data.msg;
+            }
+            showErrorInDOM(msg);
+        });
 }
 
-function confirmRequest(groupId, status, RequestDiv){
+function confirmRequest(groupId, status, RequestDiv) {
     const confirmation = {
         status
     };
-    
-    axios.post(`${ORIGIN}/user/confirmGroupRequest?groupId=${groupId}`, confirmation, { headers: {Authorization: token} })
-    .then((res) => {
-        const status = res.data.status;
-        if(status === 'accepted'){
-            showSuccessInDOM('Request accepted!');
-        }else{
-            showErrorInDOM('Request rejected!');
-        }
-        receivedRequestsContainer.removeChild(RequestDiv);
-        getGroups();
-    })
-    .catch((err) => {
-        let msg = "Could not confirm request :(";
-        if(err.response && err.response.data && err.response.data.msg){
-            msg = err.response.data.msg;
-        }
-        showErrorInDOM(msg);
-    });
+
+    axios.post(`${ORIGIN}/user/confirmGroupRequest?groupId=${groupId}`, confirmation, { headers: { Authorization: token } })
+        .then((res) => {
+            const status = res.data.status;
+            if (status === 'accepted') {
+                showSuccessInDOM('Request accepted!');
+            } else {
+                showErrorInDOM('Request rejected!');
+            }
+            receivedRequestsContainer.removeChild(RequestDiv);
+            getGroups();
+        })
+        .catch((err) => {
+            let msg = "Could not confirm request :(";
+            if (err.response && err.response.data && err.response.data.msg) {
+                msg = err.response.data.msg;
+            }
+            showErrorInDOM(msg);
+        });
 }
 
-function addRequestInDOM(request){
+function addRequestInDOM(request) {
     const groupId = request.group.id;
     const groupName = request.group.groupName;
     const username = request.user.username;
 
     const div = document.createElement('div');
     div.innerText = `Accept the request to join the group "${groupName}" sent by user "${username}" ?`;
-    div.id= groupId;
+    div.id = groupId;
     div.className = 'p-1';
 
     const acceptRequestBtn = document.createElement('button');
@@ -502,27 +503,27 @@ function addRequestInDOM(request){
     receivedRequestsContainer.appendChild(div);
 }
 
-function getPendingRequests(){
-    axios.get(`${ORIGIN}/user/pendingGroupRequests`, { headers: {Authorization: token} })
-    .then((res) => {
-        const requests = res.data;
-        receivedRequestsContainer.innerText = '';
-        if(requests.length === 0){
-            receivedRequestsContainer.innerText = 'No received requests';
-            return;
-        }
-        requests.forEach((request) => addRequestInDOM(request));
-    })
-    .catch((err) => {
-        let msg = "Could not fetch group requests :(";
-        if(err.response && err.response.data && err.response.data.msg){
-            msg = err.response.data.msg;
-        }
-        showErrorInDOM(msg);
-    });
+function getPendingRequests() {
+    axios.get(`${ORIGIN}/user/pendingGroupRequests`, { headers: { Authorization: token } })
+        .then((res) => {
+            const requests = res.data;
+            receivedRequestsContainer.innerText = '';
+            if (requests.length === 0) {
+                receivedRequestsContainer.innerText = 'No received requests';
+                return;
+            }
+            requests.forEach((request) => addRequestInDOM(request));
+        })
+        .catch((err) => {
+            let msg = "Could not fetch group requests :(";
+            if (err.response && err.response.data && err.response.data.msg) {
+                msg = err.response.data.msg;
+            }
+            showErrorInDOM(msg);
+        });
 }
 
-function addReceivedRequestHistoryInDOM(request){
+function addReceivedRequestHistoryInDOM(request) {
     const tr = document.createElement('tr');
 
     tr.innerHTML = `
@@ -537,7 +538,7 @@ function addReceivedRequestHistoryInDOM(request){
     receivedRequestsTableBody.appendChild(tr);
 }
 
-function addSentRequestHistoryInDOM(request){
+function addSentRequestHistoryInDOM(request) {
     const tr = document.createElement('tr');
 
     tr.innerHTML = `
@@ -551,81 +552,82 @@ function addSentRequestHistoryInDOM(request){
     sentRequestsTableBody.appendChild(tr);
 }
 
-function getRequestHistory(){
-    axios.get(`${ORIGIN}/user/requestHistory`, { headers: {Authorization: token} })
-    .then((res) => {
-        const { receivedRequests, sentRequests } = res.data;
-        receivedRequestsTableBody.innerText = '';
-        if(receivedRequests){
-            receivedRequests.forEach((receivedRequest) => addReceivedRequestHistoryInDOM(receivedRequest));
-        }
-        sentRequestsTableBody.innerText = '';
-        if(sentRequests){
-            sentRequests.forEach((sentRequest) => addSentRequestHistoryInDOM(sentRequest));
-        }
-    })
-    .catch((err) => {console.log(err);
-        let msg = "Could not fetch request history :(";
-        if(err.response && err.response.data && err.response.data.msg){
-            msg = err.response.data.msg;
-        }
-        showErrorInDOM(msg);
-    });
+function getRequestHistory() {
+    axios.get(`${ORIGIN}/user/requestHistory`, { headers: { Authorization: token } })
+        .then((res) => {
+            const { receivedRequests, sentRequests } = res.data;
+            receivedRequestsTableBody.innerText = '';
+            if (receivedRequests) {
+                receivedRequests.forEach((receivedRequest) => addReceivedRequestHistoryInDOM(receivedRequest));
+            }
+            sentRequestsTableBody.innerText = '';
+            if (sentRequests) {
+                sentRequests.forEach((sentRequest) => addSentRequestHistoryInDOM(sentRequest));
+            }
+        })
+        .catch((err) => {
+            console.log(err);
+            let msg = "Could not fetch request history :(";
+            if (err.response && err.response.data && err.response.data.msg) {
+                msg = err.response.data.msg;
+            }
+            showErrorInDOM(msg);
+        });
 }
 
 // Basic
-function convertToDate(dateTime){
+function convertToDate(dateTime) {
     const dateArr = (new Date(dateTime)).toDateString().split(' ');
     return `${dateArr[2]}-${dateArr[1]}-${dateArr[3]}`; //DD-mon-YYYY
 }
 
-function convertToTime(dateTime, mode='HHMMSS'){
+function convertToTime(dateTime, mode = 'HHMMSS') {
     const timeArr = (new Date(dateTime)).toTimeString().split(' ');
-    if(mode === 'HHMM'){
+    if (mode === 'HHMM') {
         const timeArr2 = timeArr[0].split(':');
         return `${timeArr2[0]}:${timeArr2[1]}`; //HH:MM
     }
     return timeArr[0]; //HH:MM:SS
 }
 
-function logout(){
-    if(confirm('Are you sure you want to logout ?')){
+function logout() {
+    if (confirm('Are you sure you want to logout ?')) {
         localStorage.clear();
         window.location.href = '/';
     }
 }
 
-function isValidURL(str){
-    const urlPattern = new RegExp('^(https?:\\/\\/)?'+ // validate protocol
-    '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // validate domain name
-    '((\\d{1,3}\\.){3}\\d{1,3}))'+ // validate OR ip (v4) address
-    '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // validate port and path
-    '(\\?[;&a-z\\d%_.~+=-]*)?'+ // validate query string
-    '(\\#[-a-z\\d_]*)?$','i'); // validate fragment locator
+function isValidURL(str) {
+    const urlPattern = new RegExp('^(https?:\\/\\/)?' + // validate protocol
+        '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // validate domain name
+        '((\\d{1,3}\\.){3}\\d{1,3}))' + // validate OR ip (v4) address
+        '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // validate port and path
+        '(\\?[;&a-z\\d%_.~+=-]*)?' + // validate query string
+        '(\\#[-a-z\\d_]*)?$', 'i'); // validate fragment locator
     return !!urlPattern.test(str);
 }
 
-function parseJwt (token) {
+function parseJwt(token) {
     var base64Url = token.split('.')[1];
     var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+    var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
     }).join(''));
 
     return JSON.parse(jsonPayload);
 }
 
-function showSuccessInDOM(msg='Success', time=3000){
+function showSuccessInDOM(msg = 'Success', time = 3000) {
     successMsg.innerText = msg;
     setTimeout(() => successMsg.innerText = '', time);
 }
 
-function showErrorInDOM(msg='Something went wrong :(', time=3000){
+function showErrorInDOM(msg = 'Something went wrong :(', time = 3000) {
     errorMsg.innerText = msg;
     setTimeout(() => errorMsg.innerText = '', time);
 }
 
-function showErrorInInputFieldInDOM(inputField){
+function showErrorInInputFieldInDOM(inputField) {
     const oldBorderColor = inputField.style.borderColor;
     inputField.style.borderColor = 'red';
     setTimeout(() => inputField.style.borderColor = oldBorderColor, 3000);

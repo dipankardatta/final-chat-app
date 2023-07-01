@@ -1,16 +1,16 @@
 const AWS = require('aws-sdk');
 
 exports.uploadToS3 = (data, filename) => {
-    const BUCKET_NAME = process.env.BUCKET_NAME;
-    const IAM_USER_ACCESS_KEY = process.env.IAM_USER_ACCESS_KEY;
-    const IAM_USER_SECRET_ACCESS_KEY = process.env.IAM_USER_SECRET_ACCESS_KEY;
+    const BUCKET_NAME = 'expensetrackss';
+    const IAM_USER_KEY = 'AKIASH3WOREHVTOHVWVW';
+    const IAM_USER_SECRET = '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';
 
-    const s3Bucket = new AWS.S3({
-        accessKeyId: IAM_USER_ACCESS_KEY,
-        secretAccessKey: IAM_USER_SECRET_ACCESS_KEY
+    let s3Bucket = new AWS.S3({
+        accessKeyId: IAM_USER_KEY,
+        secretAccessKey: IAM_USER_SECRET
     });
 
-    const params = {
+    var params = {
         Bucket: BUCKET_NAME,
         Key: filename,
         Body: data,
@@ -19,8 +19,8 @@ exports.uploadToS3 = (data, filename) => {
 
     return new Promise((resolve, reject) => {
         s3Bucket.upload(params, (err, s3Response) => {
-            if(err){
-                console.log('S3 UPLOAD ERROR');console.log(err);
+            if (err) {
+                console.log('S3 UPLOAD ERROR'); console.log(err);
                 reject(err);
                 return;
             }

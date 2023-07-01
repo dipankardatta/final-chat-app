@@ -1,4 +1,4 @@
-const ORIGIN = window.location.origin;
+const ORIGIN = 'http://localhost:3000';
 
 const form = document.getElementById('user-form');
 const usernameInput = document.getElementById('username');
@@ -9,10 +9,10 @@ const password2Input = document.getElementById('password2');
 const errorMsg = document.getElementById('err-msg');
 const successMsg = document.getElementById('success-msg');
 
-function addUser(e){
+function addUser(e) {
     e.preventDefault();
 
-    if(password1Input.value !== password2Input.value){
+    if (password1Input.value !== password2Input.value) {
         showErrorInDOM('Passwords must match!');
         const oldBorderColor = password1Input.style.borderColor;
         password1Input.style.borderColor = 'red';
@@ -23,7 +23,7 @@ function addUser(e){
         }, 5000);
         return;
     }
-    if(phNumberInput.value.length != 10){
+    if (phNumberInput.value.length != 10) {
         showErrorInDOM('Enter a valid phone number!');
         const oldBorderColor = phNumberInput.style.borderColor;
         phNumberInput.style.borderColor = 'red';
@@ -39,29 +39,29 @@ function addUser(e){
         phNumber: phNumberInput.value,
         password: password1Input.value
     };
-    
+
     axios.post(`${ORIGIN}/signup`, user)
-    .then((res) => {
-        const msg = res.data.msg ? res.data.msg : 'Could not add user!';
-        showSuccessInDOM(msg);
-        usernameInput.value = '';
-        emailInput.value = '';
-        phNumberInput.value = '';
-        password1Input.value = '';
-        password2Input.value = '';
-    })
-    .catch((err) => {
-        const msg = err.response.data.msg ? err.response.data.msg : 'Could not add user!';
-        showErrorInDOM(msg);
-    });
+        .then((res) => {
+            const msg = res.data.msg ? res.data.msg : 'Could not add user!';
+            showSuccessInDOM(msg);
+            usernameInput.value = '';
+            emailInput.value = '';
+            phNumberInput.value = '';
+            password1Input.value = '';
+            password2Input.value = '';
+        })
+        .catch((err) => {
+            const msg = err.response.data.msg ? err.response.data.msg : 'Could not add user!';
+            showErrorInDOM(msg);
+        });
 }
 
-function showSuccessInDOM(msg){
+function showSuccessInDOM(msg) {
     successMsg.innerText = msg;
     setTimeout(() => successMsg.innerText = '', 3000);
 }
 
-function showErrorInDOM(msg){
+function showErrorInDOM(msg) {
     errorMsg.innerText = msg;
     setTimeout(() => errorMsg.innerText = '', 3000);
 }

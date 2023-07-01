@@ -2,16 +2,17 @@
 const path = require('path');
 
 // nodejs npm installed modules
-require('dotenv').config();
+// require('dotenv').config();
 const express = require('express');
 const fileUpload = require("express-fileupload");
+const socketIO = require('socket.io');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const cron = require('node-cron');
 
 //util
 const sequelize = require('./util/database');
-const scheduler =require('./util/scheduler');
+const scheduler = require('./util/scheduler');
 //models
 const User = require('./models/user');
 const Chat = require('./models/chat');
@@ -88,10 +89,10 @@ ArchivedChat.belongsTo(Group);
 
 // Start the server
 sequelize.sync()
-.then((result) => {
-    app.listen(process.env.PORT || 3000, () => console.log('SERVER STARTED'));
-})
-.catch((err) => console.log(err));
+    .then((result) => {
+        app.listen(3000, () => console.log('SERVER STARTED'));
+    })
+    .catch((err) => console.log(err));
 
 // Move all the chats from 'Chats' to 'ArchivedChats' DB-table at 23:59:59
 cron.schedule('59 59 23 * * *', scheduler.moveChatsToArchivedChats);

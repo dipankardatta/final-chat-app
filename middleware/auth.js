@@ -6,41 +6,41 @@ const Group = require('../models/group');
 const Admin = require('../models/admin');
 
 exports.authenticateUser = async (req, res, next) => {
-    try{
+    try {
         const token = req.headers.authorization;
 
-        if(!token){
+        if (!token) {
             res.status(400).json({ msg: 'token required' });
             return;
         }
 
-        const userFromReq = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        const userFromReq = jwt.verify(token, 'secretkey');
 
         const user = await User.findByPk(userFromReq.userId);
 
         req.user = user;
         next();
-    }catch(err){
+    } catch (err) {
         console.log('USER AUTHENTICATION ERROR');
         res.status(500).json({ error: err, msg: 'Could not fetch user' });
     }
 }
 
 exports.authenticateUserGroup = async (req, res, next) => {
-    try{
+    try {
         const token = req.headers.authorization;
         const groupId = req.query.groupId;
 
-        if(!token){
+        if (!token) {
             res.status(400).json({ msg: 'token required' });
             return;
         }
-        if(!groupId){
+        if (!groupId) {
             res.status(400).json({ msg: 'groupId required' });
             return;
         }
 
-        const userFromReq = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        const userFromReq = jwt.verify(token, 'secretkey');
 
         // check user is in group or not
         const group = await Group.findOne({
@@ -51,7 +51,7 @@ exports.authenticateUserGroup = async (req, res, next) => {
             }]
         });
 
-        if(!group){
+        if (!group) {
             res.status(400).json({ msg: 'User not authorized or Group not found' });
             return;
         }
@@ -59,7 +59,7 @@ exports.authenticateUserGroup = async (req, res, next) => {
         req.group = group;
         req.user = group.users[0];
         next();
-    }catch(err){
+    } catch (err) {
         console.log('USER GROUP AUTHENTICATION ERROR');
         res.status(500).json({ error: err, msg: 'Could not verify user in group' });
     }
@@ -69,21 +69,21 @@ exports.authenticateGroupAdmin = async (req, res, next) => {
     const token = req.headers.authorization;
     const groupId = req.query.groupId;
 
-    if(!token){
+    if (!token) {
         res.status(400).json({ msg: 'token required' });
         return;
     }
-    if(!groupId){
+    if (!groupId) {
         res.status(400).json({ msg: 'groupId required' });
         return;
     }
 
-    const userFromReq = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const userFromReq = jwt.verify(token, 'secretkey');
     const userId = userFromReq.userId;
 
     // check user is admin of the group or not 
     const check = await Admin.findOne({
-        where:{
+        where: {
             [Op.and]: [
                 { groupId },
                 { userId }
@@ -96,7 +96,7 @@ exports.authenticateGroupAdmin = async (req, res, next) => {
         }]
     });
 
-    if(!check){
+    if (!check) {
         res.status(400).json({ msg: 'User needs to be the Admin' });
         return;
     }
